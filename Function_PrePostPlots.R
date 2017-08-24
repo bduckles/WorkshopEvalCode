@@ -8,22 +8,23 @@ library(reshape2)
 
 setwd("/Users/Anaya/Dropbox/**UCDavis/PrePostAngus")
 
+# Qualtrix adds an odd formatting third row which needs to be skipped to maintain proper factor levels. 
+# Additionally, the post data questions had a hard break coded, so the first four lines need to be skipped
 Post17 <- read.csv("ANGUS_post-assessment2017.csv",
                    na.strings = c( "", " ", "NA"),
-                   stringsAsFactors = TRUE, skip = 1, header = FALSE)
+                   stringsAsFactors = TRUE, skip = 4, header = FALSE)
 
 Pre17 <- read.csv("ANGUS_pre-assessment2017.csv", 
                   na.strings = c("", " ", "NA"),
-                  stringsAsFactors = TRUE, skip = 1, header = FALSE)
+                  stringsAsFactors = TRUE, skip = 3, header = FALSE)
+
+# The pre data had empty columns, or columns that are not renamed with the colnames() function. Remove these
+Pre17 <- Pre17[ , 49:53]
 
 #Change headernames to match
 source("PrePostHeaderSyncR.R")
 colnames(Post17) <- c(Post17shortname)
 colnames(Pre17) <- c(Pre17shortname)
-
-#remove first two non header rows 
-Pre17 <- Pre17[-1:-2, ]
-Post17 <- Post17[-1:-2, ]
 
 #Remove columns that are survey previews 
 Pre17 <- Pre17[!(Pre17$Status=="Survey Preview"| Pre17$Status=="Survey Test" ), ]
