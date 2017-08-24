@@ -47,7 +47,7 @@ Post_AbilityQ_17 <- select(Post17,
 
 ##Factor levels for each question type 
 abilitylevel <- c("No Ability", "Low Ability", "Intermediate Ability", "High Ability")
-agreelevel <- c("Strongly Disagree", "Disagree", "Agree","Strongly Agree")
+agreelevel <- c("Strongly disagree", "Disagree", "Agree", "Strongly Agree")
 
 # Define colors to be used in process_and_plot_survey()
 PurpleGreenFour <- c('#7b3294', '#c2a5cf', '#a6dba0', '#008837')
