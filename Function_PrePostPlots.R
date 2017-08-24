@@ -98,7 +98,7 @@ process_and_plot_survey <- function(data_pre, data_post, title, question_levels,
   }
 
 # Define a dummy in a title 
-Title < - "This is my title"
+Title <- "This is my title"
 
 #Running Process function 
 process_and_plot_survey(Pre_AbilityQ_17, Post_AbilityQ_17, Title, abilitylevel)
