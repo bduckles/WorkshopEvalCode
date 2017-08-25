@@ -1,6 +1,9 @@
 #Factor Levels for a group of variables within a dataset and then plot to likert with factor 
 #levels set to the same number. 
 
+#sources "PrePostHeaderSyncR.R" 
+
+
 library(likert)
 library(tidyverse)
 library(forcats)
@@ -11,6 +14,7 @@ setwd("/Users/Anaya/Dropbox/**UCDavis/PrePostAngus")
 # Qualtrix adds an odd formatting third row which needs to be skipped to maintain proper factor levels. 
 # Additionally, the post data questions had a hard break coded, so the first four lines need to be skipped
 Post17 <- read.csv("ANGUS_post-assessment2017.csv",
+<<<<<<< Updated upstream
                    na.strings = c( "", " ", "NA"),
                    stringsAsFactors = TRUE, skip = 4, header = FALSE)
 
@@ -20,6 +24,14 @@ Pre17 <- read.csv("ANGUS_pre-assessment2017.csv",
 
 # The pre data had empty columns, or columns that are not renamed with the colnames() function. Remove these
 Pre17 <- Pre17[ , 49:53]
+=======
+                   na.strings = c( "", " ", "NA", "ImportId", "QID2"),
+                   stringsAsFactors = TRUE, skip = 1, header = FALSE)
+
+Pre17 <- read.csv("ANGUS_pre-assessment2017.csv", 
+                  na.strings = c("", " ", "NA", "ImportId", "QID2"),
+                  stringsAsFactors = TRUE, skip = 1, header = FALSE)
+>>>>>>> Stashed changes
 
 #Change headernames to match
 source("PrePostHeaderSyncR.R")
@@ -45,7 +57,7 @@ Post_AgreeQ_17 <- select(Post17,
 Post_AbilityQ_17 <- select(Post17, 
                            Qpython, Qshell, Qcloud, QBWA, Qgenome, Qquery, Qevalassemb) 
 
-##Factor levels for each question type 
+##Factor levels for question levels. 
 abilitylevel <- c("No Ability", "Low Ability", "Intermediate Ability", "High Ability")
 agreelevel <- c("Strongly disagree", "Disagree", "Agree", "Strongly Agree")
 
@@ -68,8 +80,12 @@ process_and_plot_survey <- function(data_pre, data_post, title, question_levels,
   data_pre <- mutate(data_pre, 
                      Group = rep("Pre", nrow(data_pre)))
   
+<<<<<<< Updated upstream
   # Join pre- and post-survey data into one dataframe. This prints a verbose output about joins, 
   # and will generate many warnings about coercing factors to character vectors bc of different levels
+=======
+  #Add a group variable so that when joined can sort between Pre and post
+>>>>>>> Stashed changes
   joined_data <- full_join(data_post, data_pre)
 
   # Format levels for each column in the dataframe
@@ -98,12 +114,18 @@ process_and_plot_survey <- function(data_pre, data_post, title, question_levels,
   return(likert_plot)
   }
 
+<<<<<<< Updated upstream
 # Define a dummy in a title 
+=======
+#Add in a title 
+>>>>>>> Stashed changes
 Title <- "This is my title"
 
 #Running Process function 
 process_and_plot_survey(Pre_AbilityQ_17, Post_AbilityQ_17, Title, abilitylevel)
 process_and_plot_survey(Pre_AgreeQ_17, Post_AgreeQ_17, Title, agreelevel)
+
+
 
 # break -------------------------------------------------------------------
 
