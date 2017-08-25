@@ -8,22 +8,23 @@ library(reshape2)
 
 setwd("/Users/Anaya/Dropbox/**UCDavis/PrePostAngus")
 
+# Qualtrix adds an odd formatting third row which needs to be skipped to maintain proper factor levels. 
+# Additionally, the post data questions had a hard break coded, so the first four lines need to be skipped
 Post17 <- read.csv("ANGUS_post-assessment2017.csv",
                    na.strings = c( "", " ", "NA"),
-                   stringsAsFactors = TRUE, skip = 1, header = FALSE)
+                   stringsAsFactors = TRUE, skip = 4, header = FALSE)
 
 Pre17 <- read.csv("ANGUS_pre-assessment2017.csv", 
                   na.strings = c("", " ", "NA"),
-                  stringsAsFactors = TRUE, skip = 1, header = FALSE)
+                  stringsAsFactors = TRUE, skip = 3, header = FALSE)
+
+# The pre data had empty columns, or columns that are not renamed with the colnames() function. Remove these
+Pre17 <- Pre17[ , 49:53]
 
 #Change headernames to match
 source("PrePostHeaderSyncR.R")
 colnames(Post17) <- c(Post17shortname)
 colnames(Pre17) <- c(Pre17shortname)
-
-#remove first two non header rows 
-Pre17 <- Pre17[-1:-2, ]
-Post17 <- Post17[-1:-2, ]
 
 #Remove columns that are survey previews 
 Pre17 <- Pre17[!(Pre17$Status=="Survey Preview"| Pre17$Status=="Survey Test" ), ]
@@ -46,49 +47,63 @@ Post_AbilityQ_17 <- select(Post17,
 
 ##Factor levels for each question type 
 abilitylevel <- c("No Ability", "Low Ability", "Intermediate Ability", "High Ability")
-agreelevel <- c("Strongly Disagree", "Disagree", "Agree","Strongly Agree")
+agreelevel <- c("Strongly disagree", "Disagree", "Agree", "Strongly Agree")
+
+# Define colors to be used in process_and_plot_survey()
+PurpleGreenFour <- c('#7b3294', '#c2a5cf', '#a6dba0', '#008837')
+PurpleGreenFive <- c('#7b3294', '#c2a5cf', '#ffffbf', '#a6dba0', '#008837') 
+PurpleGreenSix <- c('#762a83', '#af8dc3', '#e7d4e8', '#ffffbf', '#7fbf7b', '#1b7837')
+PurpleGreenSeven <- c('#762a83', '#af8dc3', '#e7d4e8', '#ffffbf', '#d9f0d3', '#7fbf7b', '#1b7837')
+
 
 #Function to mutate data into a form that can be plotted. 
-process <- function(data_pre, data_post, title, question_levels) {
+# Define function to process and plot the data
+process_and_plot_survey <- function(data_pre, data_post, title, question_levels, color_palette) {
+  # data_pre: a data.frame of pre-survey data (Pre16 in this example)
+  # data_post: a data.frame of post-survey data (Post16 in this example)
+  
+  # add a column identifier for "Post" and "Pre"; add ID identifier to distinguish participant
   data_post <- mutate(data_post, 
-                      Group = rep("Post", nrow(data_post)),
-                      ID = rownames(data_post))
+                      Group = rep("Post", nrow(data_post)))
   data_pre <- mutate(data_pre, 
-                     Group = rep("Pre", nrow(data_pre)),
-                     ID = rownames(data_pre))
+                     Group = rep("Pre", nrow(data_pre)))
   
-  #Add a group variable so that when joined can sort between Pre and post as well as an ID variable
+  # Join pre- and post-survey data into one dataframe. This prints a verbose output about joins, 
+  # and will generate many warnings about coercing factors to character vectors bc of different levels
   joined_data <- full_join(data_post, data_pre)
-  
-  #Factor Functions and make them all the same size (use factfunc)
+
+  # Format levels for each column in the dataframe
   require(plyr)
   joined_data[, ] <- plyr::colwise(as.factor)(joined_data[, ])
-  drops <- c("Group","ID")
-  joined_data_test <- fct_unify(joined_data[ , !(names(joined_data) %in% drops)], levels = question_levels) %>% as.data.frame()
-  joined_data_bound <- cbind(joined_data_test, joined_data$Group)
+  # define column to remove (Group has two levels that are different from question_levels)
+  drops <- c("Group")
+  # Unify factor level while removing Group column
+  # note "ng" stands for "no group"
+  joined_data_ng <- fct_unify(joined_data[ , !(names(joined_data) %in% drops)], levels = question_levels) %>% as.data.frame()
+  # re-bind the group variable
+  joined_data_bound <- cbind(joined_data_ng, joined_data$Group)
+  # rename the group column to "Group" for simpler referencing
+  joined_data_bound = rename(joined_data_bound, replace = c("joined_data$Group" = "Group"))
   
-  #Redo the factoring (maybe don't do earlier factoring? not sure)
+  # Define group level
   GrpLevel <- c("Post", "Pre")
   
-  joined_data_bound$`joined_data$Group` <- factor(joined_data_bound$`joined_data$Group`, levels=GrpLevel, ordered = TRUE)
+  # Factor the group column with levels as GrpLevel
+  joined_data_bound$Group <- factor(joined_data_bound$Group, levels=GrpLevel, ordered = TRUE)
   
-  WOG_joined <- select(joined_data_bound, everything()) %>% 
-    select(-starts_with("joined_data$Group"))  
+  # perform likert using the ng dataframe with releveled factors and the refactored Group vector
+  likert_ng_joined <- likert(joined_data_ng, grouping = joined_data_bound$Group)
   
-  title_wog_joined <- title
-  likert_wog_joined <- likert(WOG_joined, grouping = joined_data_bound$`joined_data$Group`)
-  
-  plot(likert_wog_joined) + ggtitle(title_wog_joined)
-}
+  likert_plot <- plot(likert_ng_joined, colors = color_palette) + ggtitle(title) 
+  return(likert_plot)
+  }
 
-#Add in a title 
-Title < - "This is my title"
+# Define a dummy in a title 
+Title <- "This is my title"
 
 #Running Process function 
-process(Pre_AbilityQ_17, Post_AbilityQ_17, "Title", abilitylevel)
-process(Pre_AgreeQ_17, Post_AgreeQ_17, "Title", agreelevel)
-
-
+process_and_plot_survey(Pre_AbilityQ_17, Post_AbilityQ_17, Title, abilitylevel)
+process_and_plot_survey(Pre_AgreeQ_17, Post_AgreeQ_17, Title, agreelevel)
 
 # break -------------------------------------------------------------------
 
@@ -130,14 +145,7 @@ CodeAbilLik2 <- likert(WOG_Join_CodeAbil2, grouping = Join_CodeAbilSc2$Group)
 ComfCompTitle <- "2016 Edamame Comfort with Computational Tasks Scale"
 ComfCompLik <- likert(WOG_Join_ComfComp, grouping = Join_ComfCompTask$Group)
 
-#Colors! 
-PurpleGreenFour <- c('#7b3294', '#c2a5cf', '#a6dba0', '#008837')
-PurpleGreenFive <- c('#7b3294', '#c2a5cf', '#ffffbf', '#a6dba0', '#008837') 
-PurpleGreenSix <- c('#762a83', '#af8dc3', '#e7d4e8', '#ffffbf', '#7fbf7b', '#1b7837')
-PurpleGreenSeven <- c('#762a83', '#af8dc3', '#e7d4e8', '#ffffbf', '#d9f0d3', '#7fbf7b', '#1b7837')
-
 # plotting ----------------------------------------------------------------
-
 
 #Plotting 
 pdf("PerCompAbilScLikert.pdf", width = 6, height = 9 )
