@@ -3,14 +3,6 @@
 
 #sources "PrePostHeaderSyncR.R" 
 
-
-library(likert)
-library(tidyverse)
-library(forcats)
-library(reshape2)
-
-setwd("/Users/Anaya/Dropbox/**UCDavis/PrePostAngus")
-
 # Qualtrix adds an odd formatting third row which needs to be skipped to maintain proper factor levels. 
 # Additionally, the post data questions had a hard break coded, so the first four lines need to be skipped
 Post17 <- read.csv("ANGUS_post-assessment2017.csv",
